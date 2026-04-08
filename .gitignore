@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Environment variables - NEVER commit these
+my-node-api/.env
+my-node-api/serviceAccountKey.json
+
+# Sensitive / unnecessary files
+my-node-api/user_passwords.txt
+response.json
+uploads/
+
+# Build output
+dist/
+dist-ssr/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.sw?

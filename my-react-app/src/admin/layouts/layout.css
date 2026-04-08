@@ -1,0 +1,19 @@
+/* ── Admin Layout ── */
+.admin-layout {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    background: #f4f6fb;
+}
+
+.admin-main {
+    flex: 1;
+    padding: 32px 36px;
+    overflow-y: auto;
+    height: 100vh;
+    box-sizing: border-box;
+}
+
+@media (max-width: 700px) {
+    .admin-main { padding: 16px; }
+}

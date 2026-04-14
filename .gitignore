@@ -4,6 +4,8 @@ node_modules/
 # Environment variables - NEVER commit these
 my-node-api/.env
 my-node-api/serviceAccountKey.json
+my-react-app/.env
+my-react-app/.env.local
 
 # Sensitive / unnecessary files
 my-node-api/user_passwords.txt

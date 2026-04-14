@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { getAdminTicketById, adminReplyTicket, adminUpdateTicketStatus } from "../api/services";
 import { FiArrowLeft, FiUser, FiClock, FiFileText, FiPaperclip } from "react-icons/fi";
 import "./pages.css";
+import { socket } from "../../config/socket";
 
 const fmt = (date) => date
     ? new Date(date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
@@ -40,21 +41,39 @@ const TicketDetail = () => {
         }
     }, [ticket?.replies]);
 
+    useEffect(() => {
+        socket.emit("join_ticket", id);
+        socket.on("new_reply", (reply) => {
+            setTicket(prev => {
+                if (!prev) return prev;
+                return { ...prev, replies: [...(prev.replies || []), reply] };
+            });
+        });
+        socket.on("ticket_status_changed", ({ status }) => {
+            setTicket(prev => ({ ...prev, status }));
+        });
+        return () => {
+            socket.off("new_reply");
+            socket.off("ticket_status_changed");
+        };
+    }, [id]);
     const handleReply = async (e) => {
         e.preventDefault();
         if (!replyMsg.trim()) return;
         setReplying(true);
         try {
-            const res = await adminReplyTicket(ticket._id, replyMsg);
-            setTicket(res.data.ticket);
+            await adminReplyTicket(ticket._id, replyMsg);
             setReplyMsg("");
+            const res = await getAdminTicketById(id);
+            setTicket(res.data.ticket);
         } catch (err) { console.error(err); }
         finally { setReplying(false); }
     };
 
     const handleStatusUpdate = async (status) => {
         try {
-            const res = await adminUpdateTicketStatus(ticket._id, status);
+            await adminUpdateTicketStatus(ticket._id, status);
+            const res = await getAdminTicketById(id);
             setTicket(res.data.ticket);
         } catch (err) { console.error(err); }
     };

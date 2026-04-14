@@ -38,11 +38,12 @@ exports.findExpByIdPopulated = (id) => Exp.findById(id).populate("productIds");
 exports.createExp = (data) => Exp.create(data);
 exports.findExpByCode = (code) => Exp.findOne({ code });
 
-// ── ExpMem ──
 exports.findMember = (expid, userid) => ExpMem.findOne({ expid, userid });
-exports.findMembersByExp = (expid) => ExpMem.find({ expid }).populate("userid", "name email");
+exports.findAdminOfExp = (expid) => ExpMem.findOne({ expid, role: "admin" });
+// ── ExpMem ──
+exports.findMembersByExp = (expid) => ExpMem.find({ expid }).populate("userid", "name email").populate("invitedby", "name email");
 exports.countMembersByExp = (expid) => ExpMem.countDocuments({ expid });
-exports.findMembersByUser = (userid, isArchived) => ExpMem.find({ userid, isArchieved: isArchived }).populate({ path: "expid", match: { status: "Active" }, populate: { path: "productIds" } });
+exports.findMembersByUser = (userid, isArchived) => ExpMem.find({ userid, status: "accepted", isArchieved: isArchived }).populate({ path: "expid", match: { status: "Active" }, populate: { path: "productIds" } });
 exports.findAdminMembersByUser = (userid) => ExpMem.find({ userid, role: "admin" }).populate({ path: "expid", match: { status: "Active" } });
 exports.createMember = (data) => ExpMem.create(data);
 exports.deleteMemberById = (id) => ExpMem.findByIdAndDelete(id);

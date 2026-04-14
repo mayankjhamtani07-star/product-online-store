@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, forwardRef, lazy, Suspense } from "react";
 import { getProducts, getProductsWithWish, searchProducts, filterProducts, getExistingExperiences, addProductToExperience } from "../api/services";
+import { addToCart } from "../api/services";
 import { useAuth } from "../context/authContext";
 import "./pages.css";
 import useAuthAction, { LoginToast, SuccessToast } from "../hooks/useAuthAction";
@@ -257,6 +258,9 @@ const Products = forwardRef((props, ref) => {
                             product={product}
                             wishlisted={product.wishlisted}
                             onWish={() => guard(() => addToWish(product._id, () => fetchProducts(page)))}
+                            onCart={() => guard(() => addToCart(product._id)
+                                .then(() => showSuccess("Added to cart!", "success"))
+                                .catch(err => showSuccess(err?.response?.data?.message || "Failed", "error")))}
                             badge="New"
                             onAction={() => guard(() => { productIdRef.current = product._id; setShowButton(true); })}
                             actionLabel="Add to Experience"

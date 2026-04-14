@@ -14,6 +14,14 @@ const {
 } = require("../controllers/adminController");
 
 router.post("/login", loginAdmin);
+router.post("/fcm-token", adminAuth, async (req, res) => {
+    const User = require("../models/user");
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ message: "Token required" });
+    console.log("Admin FCM token saving:", token?.substring(0, 30), "for admin id:", req.user.id);
+    await User.findByIdAndUpdate(req.user.id, { fcmToken: token });
+    res.status(200).json({ message: "FCM token saved" });
+});
 
 router.get("/stats", adminAuth, getDashboardStats);
 

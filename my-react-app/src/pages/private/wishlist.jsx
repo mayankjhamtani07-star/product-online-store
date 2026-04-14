@@ -1,4 +1,5 @@
 import { getWishlist } from "../../api/services";
+import { addToCart } from "../../api/services";
 import { useState, useEffect } from "react";
 import { FiShoppingCart } from "react-icons/fi";
 import { SuccessToast } from "../../hooks/useAuthAction";
@@ -9,7 +10,7 @@ import ProductCard from "../../components/ProductCard";
 
 const Wishlist = () => {
     const { addToWish } = useWish();
-    const { successToast } = useAuthAction();
+    const { successToast, showSuccess } = useAuthAction();
     const [wishlist, setWishlist] = useState([]);
 
     const fetchWishlist = () => {
@@ -19,6 +20,13 @@ const Wishlist = () => {
     };
 
     useEffect(() => { fetchWishlist(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const handleAddToCart = async (productId) => {
+        try {
+            await addToCart(productId);
+            showSuccess("Added to cart!", "success");
+        } catch { showSuccess("Failed to add to cart", "error"); }
+    };
 
     return (
         <>
@@ -44,7 +52,7 @@ const Wishlist = () => {
                                 wishlisted={true}
                                 onWish={() => addToWish(p._id, fetchWishlist)}
                                 badge="Saved"
-                                onAction={() => {}}
+                                onAction={() => handleAddToCart(p._id)}
                                 actionLabel="Add to Cart"
                                 actionIcon={<FiShoppingCart size={14} />}
                             />

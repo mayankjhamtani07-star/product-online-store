@@ -88,6 +88,8 @@ exports.addReplyFire = asyncHandler(async (req, res) => {
     const doc = await ticketRef.get();
     if (!doc.exists) return res.status(404).json({ message: "Ticket not found" });
 
+    const ticket = doc.data();
+
     const reply = {
         sender: req.user._id.toString(),
         senderName: req.user.name,
@@ -99,6 +101,26 @@ exports.addReplyFire = asyncHandler(async (req, res) => {
     await ticketRef.update({
         replies: admin.firestore.FieldValue.arrayUnion(reply)
     });
+
+    // send push notification to the other party
+    const User = require("../models/user");
+    if (req.user.role === "admin") {
+        const user = await User.findById(ticket.userId);
+        if (user?.fcmToken) {
+            admin.messaging().send({
+                token: user.fcmToken,
+                data: { title: `Reply on: ${ticket.subject}`, body: message }
+            }).catch(console.error);
+        }
+    } else {
+        const adminUser = await User.findOne({ role: "admin" });
+        if (adminUser?.fcmToken) {
+            admin.messaging().send({
+                token: adminUser.fcmToken,
+                data: { title: `User replied: ${ticket.subject}`, body: `${req.user.name}: ${message}` }
+            }).catch(console.error);
+        }
+    }
 
     const updatedDoc = await ticketRef.get();
     res.status(200).json({ 

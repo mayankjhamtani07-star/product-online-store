@@ -40,12 +40,24 @@ export const updateExperience = (expId, formData) => api.put(`experiences/${expI
 export const deleteExperience = (expId) => api.delete(`experiences/delete/${expId}`);
 export const archiveExperience = (expId) => api.post(`experiences/archive/${expId}`, {});
 export const unarchiveExperience = (expId) => api.post(`experiences/unarchive/${expId}`, {});
+export const sendInviteEmail = (email, expid) => api.post("experiences/invite", { email, expid });
 export const joinExperience = (code) => api.post("experiences/join", { code });
 export const addProductToExperience = (productId, expid) => api.post("experiences/add-product", { productId, expid });
 export const removeUserFromExperience = (memId, expid) => api.delete("experiences/removeuser", { data: { memId, expid } });
 
 // ── Lead ──
 export const subscribeLead = (email) => api.post("leads", { email });
+
+// ── Cart ──
+export const getCart = () => api.get("cart");
+export const addToCart = (productId) => api.post(`cart/${productId}`);
+export const removeFromCart = (id) => api.delete(`cart/${id}`);
+export const clearCart = () => api.delete("cart/clear");
+
+// ── Orders ──
+export const placeOrder = () => api.post("orders");
+export const getOrders = () => api.get("orders");
+export const getOrderById = (id) => api.get(`orders/${id}`);
 
 
 // ── Ticket ──
@@ -61,3 +73,7 @@ export const getTicketByIdFire = (id) => api.get(`tickets-fire/${id}`);
 export const createTicketFire = (data) => api.post("tickets-fire", data, { headers: { "Content-Type": "multipart/form-data" } });
 export const replyToTicketFire = (id, message) => api.post(`tickets-fire/${id}/reply`, { message });
 export const reopenTicketFire = (id) => api.put(`tickets-fire/${id}/reopen`);
+
+// ── Payment ──
+export const createPayment = (total) => api.post("orders/create-payment", { total });
+export const verifyPayment = (data) => api.post("orders/verify-payment", data);

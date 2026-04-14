@@ -6,7 +6,7 @@ import { FiLogOut, FiMenu, FiX } from "react-icons/fi";
 import "./components.css";
 
 const sidebarRoutes = adminRoutesConfig.filter(r => r.icon);
-
+ 
 const AdminSidebar = () => {
     const [expanded, setExpanded] = useState(false);
     const navigate = useNavigate();

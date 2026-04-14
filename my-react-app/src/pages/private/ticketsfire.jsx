@@ -1,17 +1,21 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { db } from "../../config/firebase";
+import { useAuth } from "../../context/authContext";
 import TicketForm from "../../components/ticketForm";
-import { getTicketsFire, createTicketFire } from "../../api/services";
+import { createTicketFire } from "../../api/services";
 import "../pages.css";
 
 const fmt = (date) => {
     if (!date) return "—";
-    const d = date?._seconds ? new Date(date._seconds * 1000) : new Date(date);
+    const d = date?.seconds ? new Date(date.seconds * 1000) : date?.toDate ? date.toDate() : new Date(date);
     return isNaN(d) ? "—" : d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
 };
 
 const Tickets = () => {
     const navigate = useNavigate();
+    const { user, token } = useAuth();
     const [showForm, setShowForm] = useState(false);
     const [tickets, setTickets] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -19,25 +23,52 @@ const Tickets = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5;
 
-    const fetchTickets = (status) => {
-        setLoading(true);
-        getTicketsFire(status)
-            .then(res => setTickets(res.data.data))
-            .catch(() => setTickets([]))
-            .finally(() => setLoading(false));
+    // extract userId from JWT token since login only stores name+image in user object
+    const getUserId = () => {
+        try {
+            const payload = JSON.parse(atob(token.split(".")[1]));
+            return payload.id;
+        } catch { return null; }
     };
 
-    useEffect(() => { fetchTickets(filterStatus); setCurrentPage(1); }, [filterStatus]); // eslint-disable-line
+    useEffect(() => {
+        const userId = getUserId();
+        if (!userId) return;
+        setLoading(true);
+        setCurrentPage(1);
 
-    const filteredTickets = tickets;
+        const statusFilter = filterStatus === "Open"
+            ? ["Open", "In Progress"]
+            : ["Closed"];
 
-    const totalPages = Math.ceil(filteredTickets.length / itemsPerPage);
-    const displayed = filteredTickets.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+        const q = query(
+            collection(db, "tickets"),
+            where("userId", "==", userId),
+            where("status", "in", statusFilter)
+        );
+
+        const unsub = onSnapshot(q, (snap) => {
+            const data = snap.docs
+                .map(doc => ({ id: doc.id, ...doc.data() }))
+                .sort((a, b) => {
+                    const at = a.createdAt?.seconds ?? new Date(a.createdAt).getTime() / 1000;
+                    const bt = b.createdAt?.seconds ?? new Date(b.createdAt).getTime() / 1000;
+                    return bt - at;
+                });
+            setTickets(data);
+            setLoading(false);
+        }, () => { setTickets([]); setLoading(false); });
+
+        return () => unsub();
+    }, [filterStatus, token]); // eslint-disable-line
+
+    const totalPages = Math.ceil(tickets.length / itemsPerPage);
+    const displayed = tickets.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
     if (showForm) return (
         <div className="tickets-page-container">
             <h2 className="tickets-page-title">My Tickets <span style={{ fontSize: 13, fontWeight: 600, background: "#e8f8f0", color: "#27ae60", padding: "3px 10px", borderRadius: 50, marginLeft: 10, verticalAlign: "middle" }}>🔴 Live</span></h2>
-            <TicketForm fetchTickets={() => fetchTickets(filterStatus)} setShowFrom={setShowForm} createTicket={createTicketFire} />
+            <TicketForm fetchTickets={() => {}} setShowFrom={setShowForm} createTicket={createTicketFire} />
         </div>
     );
 
@@ -87,7 +118,7 @@ const Tickets = () => {
 
                 <div className="tickets-table-footer">
                     <div className="pagination-info">
-                        Showing {Math.min((currentPage - 1) * itemsPerPage + 1, filteredTickets.length)} – {Math.min(currentPage * itemsPerPage, filteredTickets.length)} of {filteredTickets.length} rows
+                        Showing {Math.min((currentPage - 1) * itemsPerPage + 1, tickets.length)} – {Math.min(currentPage * itemsPerPage, tickets.length)} of {tickets.length} rows
                     </div>
                     <div className="pagination-controls">
                         <button disabled={currentPage === 1} onClick={() => setCurrentPage(1)}>«</button>

@@ -14,7 +14,17 @@ const categoryRoutes = require("./routes/categoryRoutes");
 const leadRoutes = require("./routes/leadRoutes");
 const ticketRoutes = require("./routes/ticketRoutes");
 const ticketFireRoutes = require("./routes/ticketFireRoutes");
+const cartRoutes = require("./routes/cartRoutes");
+const orderRoutes = require("./routes/orderRoutes");
 const path = require("path");
+
+const http = require("http");
+const { Server } = require("socket.io");
+const { setIO } = require("./config/socketInstance");
+
+const server = http.createServer(app);
+const io = new Server(server, { cors: { origin: "*" } });
+setIO(io);
 
 connectDB();
 
@@ -30,6 +40,8 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/leads", leadRoutes);
 app.use("/api/tickets", ticketRoutes);
 app.use("/api/tickets-fire", ticketFireRoutes);
+app.use("/api/cart", cartRoutes);
+app.use("/api/orders", orderRoutes);
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 app.use((err, req, res, next) => {
@@ -37,6 +49,15 @@ app.use((err, req, res, next) => {
     res.status(err.status || 500).json({ message: err.message || "Internal Server Error" });
 });
 
-app.listen(process.env.PORT, () => {
+io.on("connection", (socket) => {
+    
+    socket.on("join_ticket", (ticketId) => {
+        socket.join(ticketId);  // joins a room named after ticketId
+    });
+
+    socket.on("disconnect", () => {});
+});
+
+server.listen(process.env.PORT, () => {
   console.log(`Server running on port ${process.env.PORT}`);
 });

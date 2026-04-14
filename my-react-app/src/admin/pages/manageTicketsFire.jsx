@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { db } from "../../config/firebase";
 import { FiUser, FiClock } from "react-icons/fi";
-import { getAdminTicketsFire } from "../api/services";
 import "./pages.css";
 
 const fmt = (date) => {
     if (!date) return "—";
-    const d = date?._seconds ? new Date(date._seconds * 1000) : new Date(date);
+    const d = date?.seconds ? new Date(date.seconds * 1000) : date?.toDate ? date.toDate() : new Date(date);
     return isNaN(d) ? "—" : d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 };
+
+const LIMIT = 10;
 
 const ManageTicketsFire = () => {
     const navigate = useNavigate();
@@ -18,19 +21,37 @@ const ManageTicketsFire = () => {
     const [tickets, setTickets] = useState([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
-    const LIMIT = 10;
 
     useEffect(() => {
         setLoading(true);
-        getAdminTicketsFire(page, LIMIT, filterStatus)
-            .then(res => {
-                setTickets(res.data.data);
-                setTotalPages(Math.ceil(res.data.total / LIMIT));
-            })
-            .catch(() => setTickets([]))
-            .finally(() => setLoading(false));
-    }, [page, filterStatus]);
+        setPage(1);
+
+        const statusFilter = filterStatus === "Open"
+            ? ["Open"]
+            : [filterStatus];
+
+        const q = query(
+            collection(db, "tickets"),
+            where("status", "in", statusFilter)
+        );
+
+        const unsub = onSnapshot(q, (snap) => {
+            const data = snap.docs
+                .map(doc => ({ id: doc.id, ...doc.data() }))
+                .sort((a, b) => {
+                    const at = a.createdAt?.seconds ?? new Date(a.createdAt).getTime() / 1000;
+                    const bt = b.createdAt?.seconds ?? new Date(b.createdAt).getTime() / 1000;
+                    return bt - at;
+                });
+            setTickets(data);
+            setLoading(false);
+        }, () => { setTickets([]); setLoading(false); });
+
+        return () => unsub();
+    }, [filterStatus]); // eslint-disable-line
+
+    const totalPages = Math.ceil(tickets.length / LIMIT);
+    const displayed = tickets.slice((page - 1) * LIMIT, page * LIMIT);
 
     return (
         <div className="admin-page">
@@ -47,9 +68,9 @@ const ManageTicketsFire = () => {
             {loading ? <div className="admin-loading">Loading...</div> : (
                 <>
                     <div className="admin-cards">
-                        {tickets.length === 0 ? (
+                        {displayed.length === 0 ? (
                             <div className="admin-loading">No tickets found.</div>
-                        ) : tickets.map(ticket => (
+                        ) : displayed.map(ticket => (
                             <div key={ticket.id} className="admin-card admin-card--clickable"
                                 onClick={() => navigate(`/admin/ticket-fire/${ticket.id}`)}>
                                 <div className="admin-card__left">

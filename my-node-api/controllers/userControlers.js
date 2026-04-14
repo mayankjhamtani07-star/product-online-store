@@ -79,3 +79,11 @@ exports.resetPassword = asyncHandler(async (req, res) => {
     await user.save();
     res.status(200).json({ message: "Password updated" });
 });
+
+exports.saveFcmToken = asyncHandler(async (req, res) => {
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ message: "Token required" });
+    console.log("User FCM token saving:", token?.substring(0, 30), "for user:", req.user.name);
+    await db.updateUserById(req.user._id, { fcmToken: token });
+    res.status(200).json({ message: "FCM token saved" });
+});

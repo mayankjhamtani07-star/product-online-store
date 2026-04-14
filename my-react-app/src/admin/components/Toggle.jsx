@@ -7,7 +7,7 @@ const Toggle = ({ active, onToggle, stopPropagation }) => {
         const t = setTimeout(() => setLabel(active ? "Active" : "Inactive"), 600);
         return () => clearTimeout(t);
     }, [active]);
-
+ 
     const handleClick = (e) => {
         if (stopPropagation) e.stopPropagation();
         onToggle();

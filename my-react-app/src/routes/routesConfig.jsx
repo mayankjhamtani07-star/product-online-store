@@ -7,7 +7,7 @@ const ResetPassword = lazy(() => import("../pages/public/resetPassword"));
 
 import { 
   FiHome, FiShoppingBag, FiZap, FiLogOut, FiHeart, FiCamera, 
-  FiMessageCircle, FiUser, FiEdit3, FiLock 
+  FiMessageCircle, FiUser, FiShoppingCart, FiPackage 
 } from "react-icons/fi";
 
 const Capture = lazy(() => import("../pages/capture"));
@@ -16,14 +16,14 @@ const Experience = lazy(() => import("../pages/private/experience"));
 const FullExperience = lazy(() => import("../pages/private/fullExperience"));
 const ArchivedExperience = lazy(() => import("../pages/private/archieveExperience"));
 const Wishlist = lazy(() => import("../pages/private/wishlist"));
+const Cart = lazy(() => import("../pages/private/cart"));
+const Orders = lazy(() => import("../pages/private/orders"));
 const Ticket = lazy(() => import("../pages/private/tickets"));
 const TicketDetail = lazy(() => import("../pages/private/ticketDetail"));
 const TicketFire = lazy(() => import("../pages/private/ticketsfire"));
 const TicketDetailFire = lazy(() => import("../pages/private/ticketDetailfire"));
 const Products = lazy(() => import("../pages/products"));
 const MyProfile = lazy(() => import("../pages/private/myProfile"));
-const UpdateProfile = lazy(() => import("../pages/private/updateProfile"));
-const UpdatePassword = lazy(() => import("../pages/private/updatePassword"));
 
 export const routesConfig = [
   {
@@ -109,6 +109,33 @@ export const routesConfig = [
     sidebarSection: null,
   },
   {
+    path: "/wishlist",
+    element: <Wishlist />,
+    icon: FiHeart,
+    layout: "private",
+    label: "Wishlist",
+    navSection: null,
+    sidebarSection: "top",
+  },
+  {
+    path: "/cart",
+    element: <Cart />,
+    icon: FiShoppingCart,
+    layout: "private",
+    label: "Cart",
+    navSection: null,
+    sidebarSection: "top",
+  },
+  {
+    path: "/orders",
+    element: <Orders />,
+    icon: FiPackage,
+    layout: "private",
+    label: "Orders",
+    navSection: null,
+    sidebarSection: "top",
+  },
+  {
     path: "/capture",
     element: <Capture />,
     icon: FiCamera,
@@ -117,15 +144,6 @@ export const routesConfig = [
     navSection: "left",
     sidebarSection: "top",
     footerSection: "links",
-  },
-  {
-    path: "/wishlist",
-    element: <Wishlist />,
-    icon: FiHeart,
-    layout: "private",
-    label: "Wishlist",
-    navSection: null,
-    sidebarSection: null,
   },
   {
     path: "/login",
@@ -167,26 +185,6 @@ export const routesConfig = [
     access: "private",
     icon: FiUser,
     label: "My Profile",
-    navSection: "dropdown",
-    sidebarSection: null,
-  },
-  {
-    path: "/profile/update",
-    element: <UpdateProfile />,
-    layout: "private",
-    access: "private",
-    icon: FiEdit3,
-    label: "Update Profile",
-    navSection: "dropdown",
-    sidebarSection: null,
-  },
-  {
-    path: "/profile/password",
-    element: <UpdatePassword />,
-    layout: "private",
-    access: "private",
-    icon: FiLock,
-    label: "Update Password",
     navSection: "dropdown",
     sidebarSection: null,
   },

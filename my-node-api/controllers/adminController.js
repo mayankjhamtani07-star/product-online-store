@@ -2,6 +2,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const asyncHandler = require("../utils/asyncHandler");
 const db = require("../services/db");
+const { getIO } = require("../config/socketInstance");
 
 exports.loginAdmin = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
@@ -198,6 +199,7 @@ exports.updateTicketStatus = asyncHandler(async (req, res) => {
     }
     const ticket = await db.updateTicketById(req.params.id, update);
     if (!ticket) return res.status(404).json({ message: "Ticket not found" });
+    getIO().to(req.params.id).emit("ticket_status_changed", { status });
     res.status(200).json({ message: "Ticket updated successfully", ticket });
 });
 
@@ -212,6 +214,13 @@ exports.addReply = asyncHandler(async (req, res) => {
         `Reply on Your Ticket: ${ticket.subject}`,
         `<div style="font-family:sans-serif;padding:24px"><h2>New Reply on Your Ticket</h2><p>Support team replied to <strong>${ticket.subject}</strong>:</p><div style="background:#fff0ed;padding:16px;border-radius:8px;border-left:4px solid #f4785a"><p>${message}</p></div></div>`
     ).catch(console.error);
+    getIO().to(req.params.id).emit("new_reply", {
+        sender: req.user._id,
+        senderRole: "admin",
+        senderName: "Support Team",
+        message,
+        createdAt: new Date()
+    });
     res.status(200).json({ message: "Reply added successfully", ticket });
 });
 
@@ -263,6 +272,7 @@ exports.addReplyFire = asyncHandler(async (req, res) => {
     const ticketRef = firestoreDb.collection("tickets").doc(req.params.id);
     const doc = await ticketRef.get();
     if (!doc.exists) return res.status(404).json({ message: "Ticket not found" });
+    const ticket = doc.data();
     const reply = {
         sender: req.user.id,
         senderName: "Support Team",
@@ -271,6 +281,20 @@ exports.addReplyFire = asyncHandler(async (req, res) => {
         createdAt: new Date().toISOString()
     };
     await ticketRef.update({ replies: firebaseAdmin.firestore.FieldValue.arrayUnion(reply) });
+
+    // send push to user
+    const User = require("../models/user");
+    const user = await User.findById(ticket.userId);
+    if (user?.fcmToken) {
+        firebaseAdmin.messaging().send({
+            token: user.fcmToken,
+            data: {
+                title: `Reply on: ${ticket.subject}`,
+                body: message
+            }
+        }).catch(console.error);
+    }
+
     const updatedDoc = await ticketRef.get();
     res.status(200).json({ message: "Reply added", ticket: { id: updatedDoc.id, ...updatedDoc.data() } });
 });

@@ -554,9 +554,64 @@
 }
 
 .admin-modal__member img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
-.admin-modal__member div { display: flex; flex-direction: column; }
-.admin-modal__member span { font-size: 13px; font-weight: 600; color: #1a1a2e; }
-.admin-modal__member small { font-size: 11px; color: #7b7fe8; font-weight: 600; }
+.admin-modal__member-info { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.admin-modal__member-info span { font-size: 13px; font-weight: 600; color: #1a1a2e; }
+.admin-modal__member-info small { font-size: 11px; color: #aaa; }
+
+.admin-modal__member-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 3px;
+}
+
+.admin-modal__member-role {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: #f4f6fb;
+    color: #888;
+}
+
+.admin-modal__member-role--admin {
+    background: #edfaf3;
+    color: #27ae60;
+}
+
+.admin-modal__member-status--accepted {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: #edfaf3;
+    color: #27ae60;
+}
+
+.admin-modal__member-status--pending {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: #fff8e1;
+    color: #f59e0b;
+}
+
+.admin-modal__member-source {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: #eef0fd;
+    color: #7b7fe8;
+}
+
+.admin-modal__member-invitedby {
+    font-size: 10px;
+    color: #aaa;
+    font-weight: 500;
+}
 
 /* ── Avatar fallback ── */
 .admin-table__avatar {
@@ -1088,4 +1143,48 @@
     background: #fff;
     border-radius: 12px;
     color: #999;
+}
+
+/* ── Admin Cart ── */
+.admin-cart-items {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 16px;
+    background: #f9f9f9;
+    border-radius: 10px;
+    margin-top: 12px;
+    border: 1px solid #f0f0f0;
+}
+
+.admin-cart-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 10px;
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid #f0f0f0;
+}
+
+.admin-cart-item img {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.admin-cart-item__name {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a1a2e;
+}
+
+.admin-cart-item__price {
+    font-size: 13px;
+    font-weight: 700;
+    color: #f4785a;
 }

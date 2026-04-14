@@ -1,4 +1,4 @@
-import { getExperience, deleteExperience, removeUserFromExperience } from "../../api/services";
+import { getExperience, deleteExperience, removeUserFromExperience, sendInviteEmail } from "../../api/services";
 import { useEffect, useState, lazy, Suspense } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FiArrowLeft, FiPackage, FiUsers, FiUserPlus, FiTrash2, FiEdit2, FiHeart } from "react-icons/fi";
@@ -14,8 +14,10 @@ const FullExperience = () => {
     const { showSuccess, successToast } = useAuthAction();
     const { addToWish } = useWish();
     const [data, setData] = useState(null);
-    const [showCode, setShowCode] = useState(false);
+    const [showAddPanel, setShowAddPanel] = useState(false);
+    const [inviteTab, setInviteTab] = useState(null); // null | "email" | "code"
     const [showEdit, setShowEdit] = useState(false);
+    const [inviteEmail, setInviteEmail] = useState("");
 
     const fetchData = () => {
         getExperience(expId)
@@ -35,6 +37,19 @@ const FullExperience = () => {
     if (!data) return null;
 
     const { exp, members, myRole } = data;
+
+    const sentInvite = () => {
+        if (!inviteEmail.trim()) return;
+        sendInviteEmail(inviteEmail, expId)
+        .then(res => { showSuccess(res.data.message, 'success'); setInviteEmail(""); setShowAddPanel(false); setInviteTab(null); })
+        .catch(err => showSuccess(err.response?.data?.message || 'Error', 'error'));
+    };
+
+    const handleCopyCode = () => {
+        navigator.clipboard.writeText(exp.code)
+            .then(() => { setInviteTab("code"); showSuccess("Invite code copied!", "success"); })
+            .catch(() => showSuccess("Failed to copy code", "error"));
+    };
 
     const deluser = (id) => {
         removeUserFromExperience(id, expId)
@@ -83,10 +98,38 @@ const FullExperience = () => {
                 </div>
                 <div className="fexp-add-member-wrap">
                     <span className="fexp-add-member-label">Add Member</span>
-                    <button className="fexp-add-member-btn" onClick={() => setShowCode(p => !p)}>
+                    <button className="fexp-add-member-btn" onClick={() => { setShowAddPanel(p => !p); setInviteTab(null); setInviteEmail(""); }}>
                         <FiUserPlus size={16} />
                     </button>
-                    {showCode && <span className="fexp-invite-code">{exp.code}</span>}
+                    {showAddPanel && (
+                        <div className="fexp-invite-panel">
+                            <div className="fexp-invite-choice">
+                                <button
+                                    className={`fexp-invite-choice-btn${inviteTab === "email" ? " fexp-invite-choice-btn--active" : ""}`}
+                                    onClick={() => setInviteTab(inviteTab === "email" ? null : "email")}>
+                                    Via Email
+                                </button>
+                                <button
+                                    className={`fexp-invite-choice-btn${inviteTab === "code" ? " fexp-invite-choice-btn--active" : ""}`}
+                                    onClick={handleCopyCode}>
+                                    Via Code
+                                </button>
+                            </div>
+                            {inviteTab === "email" && (
+                                <div className="fexp-invite-email-row">
+                                    <input
+                                        className="fexp-invite-input"
+                                        type="email"
+                                        placeholder="Enter email to invite"
+                                        value={inviteEmail}
+                                        onChange={e => setInviteEmail(e.target.value)}
+                                    />
+                                    <button className="fexp-invite-btn" onClick={sentInvite}>Send</button>
+                                </div>
+                            )}
+                            {inviteTab === "code" && <span className="fexp-invite-code">{exp.code}</span>}
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -107,7 +150,7 @@ const FullExperience = () => {
                                     </div>
                                     <div className="fexp-product-card__info">
                                         <p className="fexp-product-card__name">{p.name}</p>
-                                        <p className="fexp-product-card__price">${p.price}</p>
+                                        <p className="fexp-product-card__price">₹{p.price}</p>
                                     </div>
                                     <button style={{ background: "none", border: "none", cursor: "pointer", padding: "4px", display: "flex", alignItems: "center" }}
                                         onClick={() => addToWish(p._id, fetchData)}>
@@ -140,6 +183,9 @@ const FullExperience = () => {
                                     <span className={`fexp-member-role ${m.role === "admin" ? "fexp-member-role--admin" : ""}`}>
                                         {m.role}
                                     </span>
+                                    {m.status === "pending" && (
+                                        <span className="fexp-member-pending">Pending</span>
+                                    )}
                                     {m.role === "member" && myRole === "admin" && (
                                         <button className="fexp-member-kick-btn" onClick={() => deluser(m.userid._id)}><FiTrash2 size={14} /></button>
                                     )}

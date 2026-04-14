@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { getTicketById, replyToTicket, reopenTicket } from "../../api/services";
 import { FiArrowLeft, FiPaperclip } from "react-icons/fi";
 import "../pages.css";
+import { socket } from "../../config/socket";
 
 const fmt = (date) => date
     ? new Date(date).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric" })
@@ -37,21 +38,39 @@ const TicketDetail = () => {
         }
     }, [ticket?.replies, activeTab]);
 
+    useEffect(() => {
+        socket.emit("join_ticket", ticketId);
+        socket.on("new_reply", (reply) => {
+            setTicket(prev => {
+                if (!prev) return prev;
+                return { ...prev, replies: [...(prev.replies || []), reply] };
+            });
+        });
+        socket.on("ticket_status_changed", ({ status }) => {
+            setTicket(prev => ({ ...prev, status }));
+        });
+        return () => {
+            socket.off("new_reply");
+            socket.off("ticket_status_changed");
+        };
+    }, [ticketId]);
     const handleReply = async (e) => {
         e.preventDefault();
         if (!replyMsg.trim()) return;
         setReplying(true);
         try {
-            const res = await replyToTicket(ticket._id, replyMsg);
-            setTicket(res.data.ticket);
+            await replyToTicket(ticket._id, replyMsg);
             setReplyMsg("");
+            const res = await getTicketById(ticketId);
+            setTicket(res.data.ticket);
         } catch (err) { console.error(err); }
         finally { setReplying(false); }
     };
 
     const handleReopen = async () => {
         try {
-            const res = await reopenTicket(ticket._id);
+            await reopenTicket(ticket._id);
+            const res = await getTicketById(ticketId);
             setTicket(res.data.ticket);
         } catch (err) { console.error(err); }
     };

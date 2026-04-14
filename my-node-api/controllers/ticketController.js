@@ -1,6 +1,7 @@
 const asyncHandler = require("../utils/asyncHandler");
 const db = require("../services/db");
 const sendEmail = require("../utils/sendEmail");
+const { getIO } = require("../config/socketInstance");
 
 const adminEmail = process.env.EMAIL;
 
@@ -63,7 +64,7 @@ exports.createTicket = asyncHandler(async (req, res) => {
 exports.getUserTickets = asyncHandler(async (req, res) => {
     const Ticket = require("../models/ticket");
     const filter = { userId: req.user._id };
-    
+
     if (req.query.status === "Open") {
         filter.status = { $in: ["Open", "In Progress"] };
     } else if (req.query.status === "Closed") {
@@ -87,6 +88,7 @@ exports.updateTicketStatus = asyncHandler(async (req, res) => {
     const update = { status, closedAt: status === "Closed" ? new Date() : null };
     const ticket = await db.updateTicketById(req.params.id, update);
     if (!ticket) return res.status(404).json({ message: "Ticket not found" });
+    getIO().to(req.params.id).emit("ticket_status_changed", { status });
     res.status(200).json({ message: "Ticket status updated successfully", ticket });
 });
 
@@ -98,13 +100,19 @@ exports.addReply = asyncHandler(async (req, res) => {
     const reply = { sender: req.user._id, senderRole: req.user.role, message };
     const updated = await db.addReplyToTicket(req.params.id, reply);
 
+    getIO().to(req.params.id).emit("new_reply", {
+        sender: req.user._id,
+        senderRole: req.user.role,
+        senderName: req.user.name,
+        message,
+        createdAt: new Date()
+    });
     // if user replied → notify admin; if admin replied → notify user
     if (req.user.role === "user") {
         sendEmail(adminEmail, `User Reply: ${ticket.subject}`, replyToAdminHtml(req.user.name, ticket.subject, message)).catch(console.error);
     } else {
         sendEmail(ticket.userId.email, `Reply on Your Ticket: ${ticket.subject}`, replyToUserHtml(ticket.userId.name, ticket.subject, message)).catch(console.error);
     }
-
     res.status(200).json({ message: "Reply added successfully", ticket: updated });
 });
 
@@ -117,6 +125,7 @@ exports.reopenTicket = asyncHandler(async (req, res) => {
         return res.status(400).json({ message: "Ticket is already open" });
     await db.updateTicketById(req.params.id, { status: "Open", closedAt: null });
     const updatedTicket = await db.findTicketById(req.params.id);
+    getIO().to(req.params.id).emit("ticket_status_changed", { status: "Open" });
     res.status(200).json({ message: "Ticket reopened successfully", ticket: updatedTicket });
 });
 

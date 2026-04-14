@@ -1,33 +1,38 @@
 const mongoose = require("mongoose");
 
-const expMemSchema =new mongoose.Schema({
-    
+const expMemSchema = new mongoose.Schema({
+
     role: {
         type: String,
         enum: ["admin", "member"],
         default: "member"
     },
-    expid:{
-        type:mongoose.Schema.Types.ObjectId,
+    expid: {
+        type: mongoose.Schema.Types.ObjectId,
         ref: "Experience",
         required: true
     },
-    userid:{
-        type:mongoose.Schema.Types.ObjectId,
+    userid: {
+        type: mongoose.Schema.Types.ObjectId,
         ref: "User",
         required: true
     },
     invitedby: {
-        type: String,
-        enum: ["admin", "member", null],
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
         default: null
     },
     invitedsource: {
         type: String,
         enum: ["code", "email", null],
-        default: null
+        default: "code"
     },
-    isArchieved:{
+    status: {
+        type: String,
+        enum: ["pending", "accepted"],
+        default: "pending"
+    },
+    isArchieved: {
         type: Boolean,
         default: false
     }

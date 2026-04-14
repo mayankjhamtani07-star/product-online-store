@@ -164,9 +164,21 @@ const ManageExperiences = () => {
                                         ? <img src={`http://localhost:3001/uploads/${m.userid.image}`} alt={m.userid.name} />
                                         : <span className="admin-table__avatar">{m.userid?.name?.[0]}</span>
                                     }
-                                    <div>
+                                    <div className="admin-modal__member-info">
                                         <span>{m.userid?.name}</span>
-                                        <small>{m.role}</small>
+                                        <small>{m.userid?.email}</small>
+                                        <div className="admin-modal__member-meta">
+                                            <span className={`admin-modal__member-role ${m.role === "admin" ? "admin-modal__member-role--admin" : ""}`}>{m.role}</span>
+                                            <span className={`admin-modal__member-status ${m.status === "pending" ? "admin-modal__member-status--pending" : "admin-modal__member-status--accepted"}`}>{m.status}</span>
+                                            {m.invitedsource && (
+                                                <span className="admin-modal__member-source">
+                                                    {m.invitedsource === "email" ? "📧 Email" : "🔗 Code"}
+                                                </span>
+                                            )}
+                                            {m.invitedby && (
+                                                <span className="admin-modal__member-invitedby">by {m.invitedby?.name || "—"}</span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             ))}

@@ -1,6 +1,7 @@
 const asyncHandler = require("../utils/asyncHandler");
 const crypto = require("crypto");
 const db = require("../services/db");
+const sendEmail = require("../utils/sendEmail");
 
 exports.createExperience = asyncHandler(async (req, res) => {
     const { expname, title, description, productIds } = req.body;
@@ -11,7 +12,7 @@ exports.createExperience = asyncHandler(async (req, res) => {
     const image = req.file ? req.file.filename : "";
     const code = crypto.randomBytes(4).toString("hex").toUpperCase();
     const experience = await db.createExp({ expname, title, description, productIds: parsedIds, image, code });
-    await db.createMember({ role: "admin", expid: experience._id, userid: req.user._id, invitedby: null, invitedsource: null });
+    await db.createMember({ role: "admin", expid: experience._id, userid: req.user._id, invitedby: null, invitedsource: null, status: "accepted" });
     res.status(201).json({ message: "Experience Created Successfully", experience });
 });
 
@@ -122,7 +123,36 @@ exports.useInviteCode = asyncHandler(async (req, res) => {
     const experience = await db.findExpByCode(code);
     if (!experience) return res.status(404).json({ message: "Invalid code" });
     const existing = await db.findMember(experience._id, req.user._id);
-    if (existing) return res.status(400).json({ message: "User already joined this experience" });
-    await db.createMember({ expid: experience._id, userid: req.user._id });
+    if (existing) {
+        if (existing.status === "accepted") return res.status(409).json({ message: "You are already a member of this experience" });
+        existing.status = "accepted";
+        await existing.save();
+        return res.status(200).json({ message: "Invite code applied successfully" });
+    }
+    const adminMember = await db.findAdminOfExp(experience._id);
+    await db.createMember({ expid: experience._id, userid: req.user._id, status: "accepted", invitedsource: "code", invitedby: adminMember?.userid || null });
     res.status(200).json({ message: "Invite code applied successfully" });
+});
+
+exports.sendInviteEmail = asyncHandler(async (req, res) => {
+    const { email, expid } = req.body;
+    if (!email || !expid) return res.status(400).json({ message: "Email and Experience ID required" });
+    const experience = await db.findExpById(expid);
+    if (!experience) return res.status(404).json({ message: "Invalid Experience" });
+    const user= await db.findUserByEmail(email);
+    if(!user) return res.status(404).json({ message: "User with this email not found" });
+    const existing = await db.findMember(expid, user._id);
+    if (existing){
+        if(existing.status === "pending") {
+            
+            return res.status(409).json({ message: "Invitation already sent" });
+        }
+        return res.status(409).json({ message: "User is already a member of this experience" });
+    }
+    await db.createMember({ expid: experience._id, userid: user._id, status: "pending", invitedby: req.user._id, invitedsource: "email" });
+
+    // Here you would integrate with an email service to send the invite email containing experience.code
+    await sendEmail(user.email, "Experience Invite", `You have been invited to join the experience: ${experience.expname}. Use the invite code: ${experience.code} to join.`).catch(console.error);
+
+    res.status(200).json({ message: "Invite email sent successfully" });
 });

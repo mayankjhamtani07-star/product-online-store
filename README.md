@@ -243,6 +243,8 @@ npm install
 Create a `.env` file:
 ```env
 VITE_RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxxxx
+VITE_CLOUDINARY_CLOUD_NAME=your_cloud_name
+VITE_CLOUDINARY_UPLOAD_PRESET=your_upload_preset
 ```
 
 ```bash
@@ -354,5 +356,6 @@ User redirected to /orders
 - File uploads are validated by type and size before saving
 - Razorpay Key Secret is only in backend `.env` — never exposed to frontend
 - Razorpay Key ID is in frontend `.env` as `VITE_RAZORPAY_KEY_ID` — read via `import.meta.env`, never hardcoded
+- Cloudinary cloud name and upload preset are in frontend `.env` — never hardcoded in source
 - Firebase client config (apiKey, projectId etc.) is intentionally public — Firebase security is enforced via Firestore Rules
 - FCM uses `data`-only payloads to prevent duplicate browser notifications

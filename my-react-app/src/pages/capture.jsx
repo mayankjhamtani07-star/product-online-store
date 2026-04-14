@@ -41,9 +41,9 @@ const Capture = () => {
 
                 const formData = new FormData();
                 formData.append("file", dataUrl);
-                formData.append("upload_preset", "sa6pwded");
+                formData.append("upload_preset", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
                 const res = await axios.post(
-                    "https://api.cloudinary.com/v1_1/djrdoq4hk/image/upload",
+                    `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`,
                     formData
                 );
                 setImageUrl(res.data.secure_url);

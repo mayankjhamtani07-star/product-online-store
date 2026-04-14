@@ -346,9 +346,13 @@ User redirected to /orders
 ## 🔒 Security Notes
 
 - `serviceAccountKey.json` is gitignored — never commit it
+- `my-node-api/.env` is gitignored — never commit it
+- `my-react-app/.env` is gitignored — never commit it (contains `VITE_RAZORPAY_KEY_ID`)
 - Passwords are hashed with bcrypt before storing
 - JWT tokens expire automatically; the frontend auto-logs out on expiry
 - Admin routes are protected by a separate `adminAuth` middleware that checks `role === "admin"` in the token
 - File uploads are validated by type and size before saving
 - Razorpay Key Secret is only in backend `.env` — never exposed to frontend
+- Razorpay Key ID is in frontend `.env` as `VITE_RAZORPAY_KEY_ID` — read via `import.meta.env`, never hardcoded
+- Firebase client config (apiKey, projectId etc.) is intentionally public — Firebase security is enforced via Firestore Rules
 - FCM uses `data`-only payloads to prevent duplicate browser notifications
